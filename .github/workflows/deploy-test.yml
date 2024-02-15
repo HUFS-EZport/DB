@@ -24,10 +24,12 @@ jobs:
           ${{ env.WITH_SSH }} "cd ~/DB && docker-compose -f test-server.compose.yml down"
 
       - name: 'Pull latest code'
+        if: always()
         run: |
           ${{ env.WITH_SSH }} "cd ~/DB && git pull origin main"
       
       - name: 'Start DB server'
+        if: always()
         run: |
           echo "export MYSQL_PORT=${{ secrets.TEST_SERVER_DB_PORT }}" >> ./run.sh
           echo "export MYSQL_ROOT_PASSWORD=${{ secrets.TEST_SERVER_DB_ROOT_PW }}" >> ./run.sh
