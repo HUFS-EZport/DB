@@ -1,6 +1,7 @@
 name: 'Deploy test DB server'
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
