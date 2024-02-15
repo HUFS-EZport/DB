@@ -1,0 +1,38 @@
+name: 'Deploy test DB server'
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  WITH_SSH: 'ssh -o StrictHostKeyChecking=no -i ./rsa_id -p ${{ secrets.TEST_SERVER_SSH_PORT }} ${{ secrets.TEST_SERVER_SSH_USERNAME }}@${{ secrets.TEST_SERVER_SSH_URL }}'
+
+jobs:
+  deploy:
+    name: 'Deploy test DB server'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 'Get SSH key'
+        run: |
+          echo "${{ secrets.TEST_SERVER_SSH_KEY }}" > ./rsa_id
+          chmod 600 ./rsa_id
+      
+      - name: 'Stop exist DB server'
+        run: |
+          ${{ env.WITH_SSH }} "cd ~/DB && docker-compose -f test-server.compose.yml down"
+
+      - name: 'Pull latest code'
+        run: |
+          ${{ env.WITH_SSH }} "cd ~/DB && git pull origin main"
+      
+      - name: 'Start DB server'
+        run: |
+          echo "export MYSQL_PORT=${{ secrets.TEST_SERVER_DB_PORT }}" >> ./run.sh
+          echo "export MYSQL_ROOT_PASSWORD=${{ secrets.TEST_SERVER_DB_ROOT_PW }}" >> ./run.sh
+          echo "export MYSQL_USER=${{ secrets.TEST_SERVER_DB_USER }}" >> ./run.sh
+          echo "export MYSQL_PASSWORD=${{ secrets.TEST_SERVER_DB_PW }}" >> ./run.sh
+          echo "docker-compose -f test-server.compose.yml up -d" >> ./run.sh
+
+          ${{ env.WITH_SSH }} "bash -s" < ./run.sh
